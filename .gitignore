@@ -1,0 +1,21 @@
+# Ignore compiled Java files and build directories
+target/
+*.class
+
+# Ignore Node.js dependencies and build outputs
+node_modules/
+build/
+dist/
+
+# Ignore Python cache and environments
+__pycache__/
+*.pyc
+venv/
+.env
+
+# Ignore system junk
+.DS_Store
+Thumbs.db
+
+# Ignore logs
+*.log
