@@ -1,0 +1,122 @@
+[
+  {
+    "cve": "CVE-2023-1234",
+    "description": "SQL injection vulnerability in login form allows attackers to bypass authentication by injecting malicious SQL code",
+    "cvss": 7.5,
+    "type": "SQL Injection"
+  },
+  {
+    "cve": "CVE-2023-5678",
+    "description": "Reflected cross-site scripting (XSS) vulnerability in search parameter allows injection of malicious JavaScript",
+    "cvss": 6.1,
+    "type": "Cross-Site Scripting (XSS)"
+  },
+  {
+    "cve": "CVE-2023-9012",
+    "description": "SSL certificate validation disabled allowing man-in-the-middle attacks to intercept encrypted communications",
+    "cvss": 5.9,
+    "type": "Cryptographic Failures"
+  },
+  {
+    "cve": "CVE-2023-3456",
+    "description": "Broken access control allows unauthorized users to access sensitive data through direct URL manipulation",
+    "cvss": 7.3,
+    "type": "Broken Access Control"
+  },
+  {
+    "cve": "CVE-2023-7890",
+    "description": "Default administrative credentials not changed, allowing easy unauthorized system access",
+    "cvss": 6.8,
+    "type": "Security Misconfiguration"
+  },
+  {
+    "cve": "CVE-2023-1111",
+    "description": "Server-side request forgery allows attackers to make requests to internal network resources",
+    "cvss": 7.1,
+    "type": "Server-Side Request Forgery (SSRF)"
+  },
+  {
+    "cve": "CVE-2023-2222",
+    "description": "Insecure deserialization of user-controlled data leads to remote code execution",
+    "cvss": 8.1,
+    "type": "Insecure Deserialization"
+  },
+  {
+    "cve": "CVE-2023-3333",
+    "description": "Weak password policy allows brute force attacks on user accounts",
+    "cvss": 5.3,
+    "type": "Authentication Failures"
+  },
+  {
+    "cve": "CVE-2023-4444",
+    "description": "Missing security logging prevents detection of unauthorized access attempts",
+    "cvss": 4.3,
+    "type": "Logging & Monitoring Failures"
+  },
+  {
+    "cve": "CVE-2023-5555",
+    "description": "Sensitive customer data transmitted over unencrypted HTTP connection",
+    "cvss": 6.5,
+    "type": "Sensitive Data Exposure"
+  },
+  {
+    "cve": "CVE-2023-6666",
+    "description": "SQL injection in product search functionality allows database content extraction",
+    "cvss": 8.3,
+    "type": "SQL Injection"
+  },
+  {
+    "cve": "CVE-2023-7777",
+    "description": "Stored XSS in user comments section executes malicious scripts for all visitors",
+    "cvss": 5.4,
+    "type": "Cross-Site Scripting (XSS)"
+  },
+  {
+    "cve": "CVE-2023-8888",
+    "description": "Expired SSL certificate cannot be validated, exposing communications to interception",
+    "cvss": 5.3,
+    "type": "Cryptographic Failures"
+  },
+  {
+    "cve": "CVE-2023-9999",
+    "description": "IDOR vulnerability allows users to access other users' private data by changing URL parameters",
+    "cvss": 6.5,
+    "type": "Broken Access Control"
+  },
+  {
+    "cve": "CVE-2023-1010",
+    "description": "Directory listing enabled exposes sensitive configuration files to unauthorized users",
+    "cvss": 5.3,
+    "type": "Security Misconfiguration"
+  },
+  {
+    "cve": "CVE-2023-2020",
+    "description": "SSRF in image upload feature allows scanning of internal network infrastructure",
+    "cvss": 6.5,
+    "type": "Server-Side Request Forgery (SSRF)"
+  },
+  {
+    "cve": "CVE-2023-3030",
+    "description": "Deserialization of untrusted data in session management leads to privilege escalation",
+    "cvss": 7.2,
+    "type": "Insecure Deserialization"
+  },
+  {
+    "cve": "CVE-2023-4040",
+    "description": "No account lockout mechanism allows unlimited password guessing attempts",
+    "cvss": 5.3,
+    "type": "Authentication Failures"
+  },
+  {
+    "cve": "CVE-2023-5050",
+    "description": "Security events not logged, preventing forensic analysis of security incidents",
+    "cvss": 3.7,
+    "type": "Logging & Monitoring Failures"
+  },
+  {
+    "cve": "CVE-2023-6060",
+    "description": "API keys and database credentials exposed in client-side JavaScript code",
+    "cvss": 7.5,
+    "type": "Sensitive Data Exposure"
+  }
+]
