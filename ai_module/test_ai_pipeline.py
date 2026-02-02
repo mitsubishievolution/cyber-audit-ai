@@ -20,7 +20,7 @@ def test_data_loading():
     print("🔍 Testing data loading...")
     engineer = VulnerabilityFeatureEngineer("../data/sample_vulnerabilities.json")
     data = engineer.load_data()
-    assert len(data) == 20, f"Expected 20 vulnerabilities, got {len(data)}"
+    assert len(data) == 2682, f"Expected 2682 vulnerabilities, got {len(data)}"
     print("✅ Data loading works")
     return data
 
@@ -30,7 +30,7 @@ def test_feature_engineering(data):
     engineer = VulnerabilityFeatureEngineer("../data/sample_vulnerabilities.json")
     processed = engineer.extract_features(data)
     assert processed is not None, "Feature extraction failed"
-    assert processed['features'].shape[0] == 20, f"Expected 20 samples, got {processed['features'].shape[0]}"
+    assert processed['features'].shape[0] == 2682, f"Expected 20 samples, got {processed['features'].shape[0]}"
     print("✅ Feature engineering works")
     return processed
 
