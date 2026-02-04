@@ -36,3 +36,14 @@ To use the AI-driven risk scoring features of the Cybersecurity Audit Tool, you 
    To confirm that the AI module is ready for use, you can test the health endpoint from a separate terminal window:
    curl http://127.0.0.1:5000/health
    A successful installation will return a JSON response confirming that the status is "healthy" and the model is "loaded".
+
+### Backend Setup
+
+1. Startup
+   cd backend
+   ./mvnw spring-boot:run
+   This should start the backend in the terminal
+2. Test Database
+   Open: https://localhost:8080/h2-console
+   login
+   JDBC URL: jdbc:h2:mem:cyberauditdb, user 'sa', pass 'password'
