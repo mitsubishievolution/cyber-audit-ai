@@ -35,9 +35,6 @@ public interface ScanRepository extends JpaRepository<Scan, Long> {
      * Example usage:
      * List<Scan> completedScans = scanRepository.findByStatus("COMPLETED");
      * 
-     * Spring generates SQL:
-     * SELECT * FROM scans WHERE status = ?
-     * 
      * @param status The status to search for (e.g., "NEW", "COMPLETED")
      * @return List of scans with that status
      */
