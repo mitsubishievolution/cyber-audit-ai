@@ -1,63 +1,53 @@
 """
 model_trainer.py
 
-Hello! This is the "AI Brain Builder" file. Think of it like a personal trainer
-who teaches an athlete (our AI) how to make good decisions.
+Trains a Random Forest regression model to predict CVSS risk scores for cybersecurity vulnerabilities.
 
-What this file does:
-- Takes our prepared vulnerability data (from the Data Chef)
-- Trains a Random Forest AI model to predict risk scores
-- Tests how well the AI learned
-- Saves the trained AI brain for later use
-
-Imagine you have a student who needs to learn how dangerous different security
-problems are. This file teaches the student by showing examples and testing
-how well they understand the patterns.
+Functionality:
+- Loads and processes vulnerability data from JSON
+- Trains RandomForestRegressor on engineered features
+- Evaluates model performance using MAE, RMSE, and R² metrics
+- Saves trained model and feature engineer for inference
+- Generates performance visualization graphs
 
 Author: University Cybersecurity Audit AI Project
 """
 
-import numpy as np  # For math operations and number handling
-from sklearn.ensemble import RandomForestRegressor  # The AI algorithm we'll use
-from sklearn.model_selection import train_test_split, cross_val_score  # Tools to split and test data
-import joblib  # Tool to save and load our trained AI brain
-import os  # File system operations
-from feature_engineering import VulnerabilityFeatureEngineer  # Our Data Chef
-from utils import evaluate_model_performance, ensure_directory_exists  # Helper tools
+import numpy as np
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split, cross_val_score
+import joblib
+import os
+from feature_engineering import VulnerabilityFeatureEngineer
+from utils import evaluate_model_performance, ensure_directory_exists, plot_prediction_comparison
 
 class CybersecurityRiskModel:
     """
-    This is our "AI Student" class. It represents the AI brain that will learn
-    to predict cybersecurity risk scores.
-
-    Think of it like a student who:
-    - Starts as a beginner (untrained)
-    - Learns from examples (training)
-    - Gets tested on new problems (prediction)
-    - Gets better with practice (more training data)
+    Random Forest regression model for predicting vulnerability risk scores.
+    
+    Wraps sklearn's RandomForestRegressor with training, evaluation, and persistence methods.
+    Maintains training state and model hyperparameters for reproducibility.
     """
 
     def __init__(self, n_estimators=100, max_depth=10, random_state=42):
         """
-        This is like "creating a new student" for our AI class.
+        Initialize the Random Forest model with specified hyperparameters.
 
         Args:
-            n_estimators (int): How many "mini-brains" (decision trees) to create
-                               More trees = smarter but slower
-            max_depth (int): How deep each mini-brain can think
-                            Deeper = more detailed thinking but slower
-            random_state (int): A seed to make results consistent (like same starting point)
+            n_estimators (int): Number of decision trees in the forest
+            max_depth (int): Maximum depth of each decision tree
+            random_state (int): Seed for random number generator (ensures reproducibility)
         """
-        # Create our AI student (Random Forest algorithm)
+        # Initialize RandomForestRegressor with specified hyperparameters
         self.model = RandomForestRegressor(
-            n_estimators=n_estimators,  # Number of decision trees
-            max_depth=max_depth,        # How deep each tree can grow
-            random_state=random_state,  # For consistent results
-            n_jobs=-1                   # Use all computer cores for speed
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            random_state=random_state,
+            n_jobs=-1  # Use all available CPU cores for parallel processing
         )
-        self.is_trained = False          # The student hasn't learned yet
-        self.feature_names = []          # We'll remember what ingredients we taught with
-        self.model_params = {            # Remember our settings
+        self.is_trained = False  # Training status flag
+        self.feature_names = []  # Store feature names for interpretability
+        self.model_params = {  # Store hyperparameters for model persistence
             'n_estimators': n_estimators,
             'max_depth': max_depth,
             'random_state': random_state
@@ -65,165 +55,167 @@ class CybersecurityRiskModel:
 
     def train(self, X, y, test_size=0.2):
         """
-        This is the main "teaching" method! It teaches our AI student using examples.
+        Train the Random Forest model and evaluate performance on test set.
 
-        Think of it like teaching a child to recognize dangerous animals:
-        - Show them pictures of lions, tigers, bears (training data)
-        - Tell them "these are dangerous!" (target scores)
-        - Test them on new animals they haven't seen (testing data)
-        - See how well they learned (evaluation metrics)
+        Splits data into train/test sets, fits the model, generates predictions,
+        and evaluates using MAE, RMSE, R², and cross-validation metrics.
 
         Args:
-            X (array): The "pictures" - our numeric features (ingredients from Data Chef)
-            y (array): The "answers" - correct danger scores for each vulnerability
-            test_size (float): What fraction to save for testing (like keeping some quiz questions secret)
+            X (array): Feature matrix (n_samples, n_features)
+            y (array): Target values (CVSS scores)
+            test_size (float): Proportion of data to use for testing (default: 0.2)
 
         Returns:
-            dict: A report card showing how well the student learned
+            dict: Training results containing model, metrics, and train/test data splits
         """
-        print("🚀 Starting AI model training...")
+        print(" Starting AI model training...")
         print(f"   - Training data shape: {X.shape}")
         print(f"   - Target values shape: {y.shape}")
         print(f"   - Test size: {test_size*100}%")
 
-        # Split our lesson materials into study materials and quiz questions
+        # Split data into training and test sets
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=test_size, random_state=self.model_params['random_state']
         )
 
-        print(f"   - Study materials: {X_train.shape[0]} examples (what the AI learns from)")
-        print(f"   - Quiz questions: {X_test.shape[0]} examples (what we test the AI on)")
+        print(f"   - Training set: {X_train.shape[0]} samples")
+        print(f"   - Test set: {X_test.shape[0]} samples")
 
-        # Let the AI student study the examples
-        print("   - Teaching the Random Forest algorithm...")
-        self.model.fit(X_train, y_train)  # This is where the AI learns!
-        self.is_trained = True  # The student is now educated
+        # Fit the Random Forest model on training data
+        print("   - Training Random Forest model...")
+        self.model.fit(X_train, y_train)
+        self.is_trained = True
 
-        # Give the student a quiz on the secret questions
-        y_pred = self.model.predict(X_test)  # AI makes predictions on test data
+        # Generate predictions on test set
+        y_pred = self.model.predict(X_test)
 
-        # Grade the student's performance
+        # Evaluate model performance against dissertation criteria
         metrics = evaluate_model_performance(y_test, y_pred, "Random Forest Risk Model")
 
-        # Do some extra testing to make sure the student really understands
-        # This is like giving the student multiple quizzes with different questions
+        # Perform 5-fold cross-validation on training set
         cv_scores = cross_val_score(
             self.model, X_train, y_train,
-            cv=5, scoring='neg_mean_squared_error'  # Test 5 times with different question sets
+            cv=5, scoring='neg_mean_squared_error'
         )
-        cv_rmse_scores = np.sqrt(-cv_scores)  # Convert to positive error scores
+        cv_rmse_scores = np.sqrt(-cv_scores)  # Convert negative MSE to RMSE
 
-        print("\n📊 Multiple Quiz Results (Cross-validation):")
-        print(f"   - Quiz scores: {cv_rmse_scores}")
-        print(f"   - Average quiz score: {cv_rmse_scores.mean():.3f} (lower is better)")
-        print(f"   - Quiz score consistency: {cv_rmse_scores.std():.3f} (lower is more consistent)")
+        print("\n Cross-Validation Results:")
+        print(f"   - RMSE scores: {cv_rmse_scores}")
+        print(f"   - Mean RMSE: {cv_rmse_scores.mean():.3f}")
+        print(f"   - Std Dev: {cv_rmse_scores.std():.3f}")
 
-        # Add the extra quiz results to our report card
+        # Store cross-validation metrics
         metrics['cv_mean_rmse'] = float(cv_rmse_scores.mean())
         metrics['cv_std_rmse'] = float(cv_rmse_scores.std())
 
-        print("✅ AI training completed successfully! The student is ready to predict risk scores.")
+        print("✅ Model training completed successfully")
 
-        # Return the complete report card
+        # Return training results
         return {
-            'model': self.model,           # The trained AI student
-            'metrics': metrics,           # Report card with grades
-            'X_train': X_train,           # Study materials used
-            'X_test': X_test,             # Quiz questions
-            'y_train': y_train,           # Correct answers for study materials
-            'y_test': y_test,             # Correct answers for quiz
-            'y_pred': y_pred              # AI's quiz answers
+            'model': self.model,
+            'metrics': metrics,
+            'X_train': X_train,
+            'X_test': X_test,
+            'y_train': y_train,
+            'y_test': y_test,
+            'y_pred': y_pred
         }
 
     def predict(self, X):
         """
-        This is like giving our trained AI student a new test! The student uses
-        what they learned to predict danger scores for vulnerabilities they've never seen.
-
-        Think of it like:
-        - Student studied lions, tigers, bears
-        - Now we show them a wolf and ask "how dangerous is this?"
-        - Student says "8 out of 10" based on learned patterns
+        Generate risk score predictions for new vulnerability data.
 
         Args:
-            X (array): New "test questions" - numeric features of vulnerabilities to analyze
+            X (array): Feature matrix for vulnerabilities to score
 
         Returns:
-            array: The AI's predictions (danger scores from 0-10)
+            array: Predicted CVSS risk scores (0-10 scale)
+        
+        Raises:
+            ValueError: If model has not been trained yet
         """
         if not self.is_trained:
-            raise ValueError("Cannot take a test without studying first! Train the model before predicting.")
+            raise ValueError("Model must be trained before making predictions")
 
-        # Ask the AI student to make predictions
+        # Generate predictions using trained Random Forest
         return self.model.predict(X)
 
     def get_feature_importance(self):
         """
-        This method asks "which ingredients were most important for learning?"
-        It's like asking a chef "which spices made the biggest difference in your recipes?"
-
-        The AI tells us which features (ingredients) it found most useful for making predictions.
-        For example, maybe "SQL" words were very important for predicting database risks.
+        Extract feature importance scores from the trained Random Forest.
+        
+        Returns feature importance values indicating which features contributed
+        most to the model's predictions. Higher values indicate more important features.
 
         Returns:
-            array: Scores showing how important each ingredient was (0-1 scale)
+            array: Feature importance scores (sum to 1.0)
+        
+        Raises:
+            ValueError: If model has not been trained yet
         """
         if not self.is_trained:
-            raise ValueError("Cannot check ingredient importance until the AI has been trained!")
+            raise ValueError("Model must be trained before accessing feature importances")
 
-        # Ask the AI which ingredients it found most useful
+        # Return feature importance from Random Forest
         return self.model.feature_importances_
 
     def save_model(self, filepath, feature_engineer=None):
         """
-        Save the trained model to disk.
+        Serialize and save the trained model to disk using joblib.
 
         Args:
-            filepath (str): Path where to save the model
-            feature_engineer: The feature engineering object used for training
+            filepath (str): Destination path for model file (.pkl)
+            feature_engineer: Fitted VulnerabilityFeatureEngineer instance
         """
+        # Create directory if it doesn't exist
         ensure_directory_exists(os.path.dirname(filepath))
 
+        # Package model and metadata
         model_data = {
             'model': self.model,
             'is_trained': self.is_trained,
             'model_params': self.model_params,
             'feature_names': self.feature_names,
-            'feature_engineer': feature_engineer  # Save the fitted feature engineer
+            'feature_engineer': feature_engineer
         }
 
+        # Serialize to disk
         joblib.dump(model_data, filepath)
         print(f"💾 Model saved to {filepath}")
 
     @classmethod
     def load_model(cls, filepath):
         """
-        Load a trained model from disk.
+        Load a previously saved model from disk.
 
         Args:
-            filepath (str): Path to the saved model
+            filepath (str): Path to saved model file (.pkl)
 
         Returns:
-            tuple: (CybersecurityRiskModel, feature_engineer) - Loaded model and feature engineer
+            tuple: (CybersecurityRiskModel instance, feature_engineer)
+        
+        Raises:
+            FileNotFoundError: If model file doesn't exist
         """
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"Model file not found at {filepath}")
 
+        # Deserialize model data
         model_data = joblib.load(filepath)
 
-        # Create new instance
+        # Reconstruct model instance with original hyperparameters
         instance = cls(
             n_estimators=model_data['model_params']['n_estimators'],
             max_depth=model_data['model_params']['max_depth'],
             random_state=model_data['model_params']['random_state']
         )
 
-        # Restore trained state
+        # Restore trained model state
         instance.model = model_data['model']
         instance.is_trained = model_data['is_trained']
         instance.feature_names = model_data.get('feature_names', [])
 
-        # Return both model and feature engineer
+        # Extract feature engineer
         feature_engineer = model_data.get('feature_engineer')
 
         print(f"📂 Model loaded from {filepath}")
@@ -232,20 +224,28 @@ class CybersecurityRiskModel:
 def train_complete_model(data_path="../data/sample_vulnerabilities.json",
                         model_save_path="model/trained_model.pkl"):
     """
-    Complete pipeline to train the AI model from start to finish.
+    Execute complete training pipeline: load data, train model, evaluate, and save.
+
+    Pipeline steps:
+    1. Load and engineer features from vulnerability JSON
+    2. Train Random Forest model on engineered features
+    3. Generate performance visualization (scatter plot)
+    4. Save trained model and feature engineer to disk
+    5. Compute and display feature importance rankings
 
     Args:
-        data_path (str): Path to vulnerability data
-        model_save_path (str): Where to save the trained model
+        data_path (str): Path to vulnerability data JSON file
+        model_save_path (str): Destination path for trained model (.pkl)
 
     Returns:
-        dict: Training results and metrics
+        dict: Training results containing model, metrics, feature importance, and data
+              Returns None if training fails
     """
     print("🎯 Starting Complete AI Model Training Pipeline")
     print("=" * 50)
 
-    # Step 1: Load and process data
-    print("\n📥 Step 1: Loading and processing vulnerability data...")
+    # Step 1: Load and engineer features from vulnerability data
+    print("\n📥 Loading and processing vulnerability data...")
     engineer = VulnerabilityFeatureEngineer(data_path)
     raw_data = engineer.load_data()
 
@@ -258,52 +258,64 @@ def train_complete_model(data_path="../data/sample_vulnerabilities.json",
         print("❌ Feature extraction failed")
         return None
 
-    # Step 2: Initialize and train model
-    print("\n🤖 Step 2: Training RandomForest risk prediction model...")
+    # Step 2: Initialize Random Forest model with hyperparameters
+    print("\n🤖 Training RandomForest risk prediction model...")
     model = CybersecurityRiskModel(
-        n_estimators=100,  # Number of trees
+        n_estimators=100,  # Number of decision trees in ensemble
         max_depth=10,      # Maximum tree depth
-        random_state=42    # For reproducible results
+        random_state=42    # Seed for reproducibility
     )
 
-    # Store feature names for later interpretation
+    # Attach feature names to model for interpretability
     model.feature_names = processed_data['feature_names']
 
-    # Train the model
+    # Train model and evaluate on test set
     training_results = model.train(
         processed_data['features'],
         processed_data['targets'],
         test_size=0.2
     )
 
-    # Step 3: Save the trained model
-    print(f"\n💾 Step 3: Saving trained model to {model_save_path}...")
+    # Step 3: Generate scatter plot visualization of predictions vs actual
+    print("\n📈 Generating performance graphs...")
+    graph_save_path = "model/training_performance.png"
+    plot_prediction_comparison(
+        training_results['y_test'],   # Ground truth CVSS scores
+        training_results['y_pred'],   # Model predictions
+        save_path=graph_save_path
+    )
+    print(f"   ✅ Performance graph saved to: {graph_save_path}")
+
+    # Step 4: Serialize trained model and feature engineer to disk
+    print(f"\n Saving trained model to {model_save_path}...")
     model.save_model(model_save_path, engineer)
 
-    # Step 4: Generate feature importance analysis
-    print("\n📊 Step 4: Analyzing feature importance...")
+    # Step 5: Extract and rank feature importance scores
+    print("\n Analyzing feature importance...")
     feature_importance = model.get_feature_importance()
 
-    # Create importance summary
+    # Build list of features with >1% importance
     importance_summary = []
     for name, importance in zip(model.feature_names, feature_importance):
-        if importance > 0.01:  # Only show features with >1% importance
+        if importance > 0.01:
             importance_summary.append({
                 'feature': name,
                 'importance': float(importance)
             })
 
-    # Sort by importance
+    # Sort features by importance (descending)
     importance_summary.sort(key=lambda x: x['importance'], reverse=True)
 
     print("Top 5 most important features:")
     for i, item in enumerate(importance_summary[:5]):
-        print(".4f")
+        print(f"   {i+1}. {item['feature']}: {item['importance']:.4f}")
 
-    # Step 5: Final summary
+    # Step 6: Display final training summary
     print("\n🎉 AI Model Training Complete!")
     print(f"   - Model saved: {model_save_path}")
-    print(f"   - Training accuracy: {training_results['metrics']['accuracy_within_1_point']}% within 1 point")
+    print(f"   - Performance graph: {graph_save_path}")
+    print(f"   - Predictions within 1 point: {training_results['metrics']['accuracy_within_1_point']}%")
+    print(f"   - Model meets requirements: {'✅ YES' if training_results['metrics']['overall_pass'] else '❌ NO'}")
     print(f"   - Ready for predictions!")
 
     return {
@@ -316,20 +328,22 @@ def train_complete_model(data_path="../data/sample_vulnerabilities.json",
 
 def main():
     """
-    Main function to run the complete training pipeline.
-    This can be executed directly to train the model.
+    Entry point for model training script.
+    
+    Creates model directory if needed, executes training pipeline,
+    and reports success or failure.
     """
-    # Ensure model directory exists
+    # Create model output directory if it doesn't exist
     ensure_directory_exists("model")
 
-    # Run complete training
+    # Execute full training pipeline
     results = train_complete_model()
 
     if results:
-        print("\n✅ Training pipeline completed successfully!")
+        print("\n Training pipeline completed successfully!")
         print("You can now use the trained model for risk predictions.")
     else:
-        print("\n❌ Training pipeline failed. Check the error messages above.")
+        print("\n Training pipeline failed. Check the error messages above.")
 
 if __name__ == "__main__":
     main()

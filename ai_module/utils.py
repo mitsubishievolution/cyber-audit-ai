@@ -1,76 +1,64 @@
 """
 utils.py
 
-Hello! This is the "Helper Toolbox" file. Think of it like a toolbox full of useful
-tools that other parts of our AI system can borrow when they need help.
+Utility functions for the cybersecurity audit AI system.
 
-What this toolbox contains:
-- Data loading tools (like opening files safely)
-- Model grading tools (like checking how well our AI student did)
-- File management tools (like creating folders and saving files)
-- Chart-making tools (like creating graphs to show results)
-
-Imagine you're building a treehouse with friends. Some friends are good at cutting wood,
-some are good at hammering nails, some are good at drawing plans. This file is like the
-shared toolbox where everyone can find the tools they need.
+This module provides helper functions for:
+- Loading and validating vulnerability data from JSON files
+- Evaluating model performance using regression metrics (MAE, RMSE, R²)
+- Generating visualization plots for model predictions
+- Managing file system operations (directories, saving/loading results)
 
 Author: University Cybersecurity Audit AI Project
 """
 
-import json          # For reading and writing JSON files (our data format)
-import os            # For working with files and folders on the computer
-import numpy as np   # For math operations on numbers
-from sklearn.metrics import mean_squared_error, r2_score  # For grading AI performance
-import matplotlib.pyplot as plt  # For creating charts and graphs
+import json
+import os
+import numpy as np
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
 
 def load_vulnerability_data(data_path):
     """
-    This is like a "safe file opener" tool. It carefully opens our vulnerability
-    database file and makes sure everything is okay before giving it to other tools.
+    Load vulnerability data from a JSON file with error handling.
 
-    Think of it like a librarian who:
-    - Checks if the book exists on the shelf
-    - Opens it carefully without damaging the pages
-    - Counts how many recipes are inside
-    - Makes sure the book is in the right format
+    Performs validation checks to ensure the file exists, is valid JSON,
+    and contains a list of vulnerability records.
 
     Args:
-        data_path (str): The file path to our vulnerability "cookbook"
+        data_path (str): Path to the vulnerability data JSON file
 
     Returns:
-        list or None: A list of vulnerability recipes, or None if something went wrong
+        list or None: List of vulnerability dictionaries, or None if loading fails
     """
     try:
-        # First, check if the file actually exists (like checking if book is on shelf)
+        # Check if file exists before attempting to open
         if not os.path.exists(data_path):
-            print(f"Error: Cookbook not found at {data_path}")
+            print(f"Error: Data file not found at {data_path}")
             return None
 
-        # Open the file carefully and read all the recipes
+        # Load JSON data from file
         with open(data_path, 'r', encoding='utf-8') as file:
-            data = json.load(file)  # Load the JSON data
+            data = json.load(file)
 
-        # Make sure we got a list of recipes (not a single recipe or something else)
+        # Validate that data is a list (not a single object or other type)
         if not isinstance(data, list):
-            print("Error: Cookbook must contain a list of vulnerability recipes")
+            print("Error: Data file must contain a list of vulnerability records")
             return None
 
-        # Check if the cookbook has any recipes at all
+        # Check for empty dataset
         if len(data) == 0:
-            print("Warning: Cookbook is empty - no recipes found")
+            print("Warning: Data file is empty - no vulnerability records found")
             return []
 
-        # Success! Tell the user how many recipes we found
-        print(f"Successfully loaded {len(data)} vulnerability recipes from the cookbook")
+        print(f"Successfully loaded {len(data)} vulnerability records")
         return data
 
     except json.JSONDecodeError as e:
-        # The cookbook has damaged pages or bad formatting
-        print(f"Error: Cookbook has bad formatting - {e}")
+        print(f"Error: Invalid JSON format - {e}")
         return None
     except Exception as e:
-        # Something unexpected went wrong
-        print(f"Error opening cookbook: {e}")
+        print(f"Error loading data file: {e}")
         return None
 
 def validate_vulnerability_record(record):
@@ -129,92 +117,123 @@ def validate_dataset(data):
 
     return True
 
-def evaluate_model_performance(y_true, y_pred, model_name="AI Student"):
+def evaluate_model_performance(y_true, y_pred, model_name="Model"):
     """
-    This is the "Grade Calculator" tool! It grades how well our AI student performed
-    on their test, using several different scoring methods.
+    Evaluate regression model performance using multiple metrics.
 
-    Think of it like a teacher grading a student's quiz:
-    - How close were the answers to correct? (Mean Absolute Error)
-    - What percentage got within 1 point? (Accuracy within 1 point)
-    - How consistent were the mistakes? (R² Score)
+    Calculates MAE, RMSE, and R² scores, then checks against dissertation
+    success criteria (R² ≥ 0.75, MAE ≤ 1.0). Also computes accuracy within
+    tolerance thresholds (1.0 and 2.0 points).
 
     Args:
-        y_true (array): The correct answers (real danger scores)
-        y_pred (array): The AI's answers (predicted danger scores)
-        model_name (str): What to call our AI student in the report
+        y_true (array): Ground truth CVSS scores
+        y_pred (array): Predicted risk scores from model
+        model_name (str): Name to display in output (default: "Model")
 
     Returns:
-        dict: A report card with all the grades and scores
+        dict: Dictionary containing all evaluation metrics and pass/fail status
     """
-    # Calculate different types of "grades" for the AI student
-    mse = mean_squared_error(y_true, y_pred)  # Mean Squared Error (punishes big mistakes more)
-    rmse = np.sqrt(mse)                       # Root Mean Squared Error (easier to understand)
-    r2 = r2_score(y_true, y_pred)             # R² Score (how well the AI explains the data)
+    # Define dissertation success thresholds
+    R2_THRESHOLD = 0.75   # Minimum acceptable R² score
+    MAE_THRESHOLD = 1.0   # Maximum acceptable mean absolute error
+    
+    # Compute regression metrics
+    mse = mean_squared_error(y_true, y_pred)  # Mean squared error
+    rmse = np.sqrt(mse)                       # Root mean squared error
+    r2 = r2_score(y_true, y_pred)             # Coefficient of determination
 
-    # Calculate average mistake size
-    mae = np.mean(np.abs(y_true - y_pred))    # Mean Absolute Error
+    # Compute mean absolute error
+    mae = np.mean(np.abs(y_true - y_pred))
 
-    # Calculate "close enough" percentages
-    within_1_point = np.mean(np.abs(y_true - y_pred) <= 1.0) * 100  # Within 1 point of correct
-    within_2_points = np.mean(np.abs(y_true - y_pred) <= 2.0) * 100 # Within 2 points of correct
+    # Calculate accuracy within tolerance thresholds
+    within_1_point = np.mean(np.abs(y_true - y_pred) <= 1.0) * 100
+    within_2_points = np.mean(np.abs(y_true - y_pred) <= 2.0) * 100
 
-    # Package all the grades into a report card
+    # Check against dissertation success criteria
+    r2_pass = r2 >= R2_THRESHOLD
+    mae_pass = mae <= MAE_THRESHOLD
+    overall_pass = r2_pass and mae_pass
+
+    # Package metrics into dictionary
     metrics = {
         'model_name': model_name,
-        'mean_squared_error': round(mse, 4),          # Overall error score
-        'root_mean_squared_error': round(rmse, 4),    # Easier to understand error
-        'mean_absolute_error': round(mae, 4),         # Average mistake size
-        'r_squared': round(r2, 4),                    # How well AI explains patterns
-        'accuracy_within_1_point': round(within_1_point, 2),  # % within 1 point
-        'accuracy_within_2_points': round(within_2_points, 2), # % within 2 points
-        'sample_count': len(y_true)                   # How many questions were asked
+        'mean_squared_error': round(mse, 4),
+        'root_mean_squared_error': round(rmse, 4),
+        'mean_absolute_error': round(mae, 4),
+        'r_squared': round(r2, 4),
+        'accuracy_within_1_point': round(within_1_point, 2),
+        'accuracy_within_2_points': round(within_2_points, 2),
+        'sample_count': len(y_true),
+        'r2_threshold': R2_THRESHOLD,
+        'mae_threshold': MAE_THRESHOLD,
+        'r2_pass': r2_pass,
+        'mae_pass': mae_pass,
+        'overall_pass': overall_pass
     }
 
-    # Print the report card in a nice format
-    print(f"\n=== {model_name} Report Card ===")
-    print(f"Number of test questions: {metrics['sample_count']} vulnerabilities")
-    print(f"Average mistake size: {metrics['mean_absolute_error']} points")
-    print(f"Overall pattern understanding: {metrics['r_squared']} (closer to 1.0 is better)")
-    print(f"Got within 1 point of correct: {metrics['accuracy_within_1_point']}%")
-    print(f"Got within 2 points of correct: {metrics['accuracy_within_2_points']}%")
+    # Display performance metrics
+    print(f"\n=== {model_name} Performance Report ===")
+    print(f"Test Set Size: {metrics['sample_count']} vulnerabilities")
+    print(f"\n Key Metrics:")
+    print(f"   Mean Absolute Error (MAE):  {metrics['mean_absolute_error']:.4f}")
+    print(f"   Root Mean Squared Error (RMSE): {metrics['root_mean_squared_error']:.4f}")
+    print(f"   R² Score (R-squared):       {metrics['r_squared']:.4f}")
+    print(f"\n🎯 Accuracy Benchmarks:")
+    print(f"   Within 1.0 point:  {metrics['accuracy_within_1_point']:.2f}%")
+    print(f"   Within 2.0 points: {metrics['accuracy_within_2_points']:.2f}%")
 
-    # Give some encouragement based on performance
-    if metrics['accuracy_within_1_point'] > 70:
-        print("Excellent work! The AI student is very accurate.")
-    elif metrics['accuracy_within_1_point'] > 50:
-        print("Good job! The AI student is learning well.")
+    # Display dissertation success criteria evaluation
+    print(f"\n{'='*60}")
+    print("DISSERTATION SUCCESS CRITERIA EVALUATION")
+    print(f"{'='*60}")
+    print(f"R² Score:  {r2:.4f} | Target: ≥ {R2_THRESHOLD} | {'✅ PASS' if r2_pass else '❌ FAIL'}")
+    print(f"MAE:       {mae:.4f} | Target: ≤ {MAE_THRESHOLD} | {'✅ PASS' if mae_pass else '❌ FAIL'}")
+    print(f"{'='*60}")
+    
+    # Print overall verdict
+    if overall_pass:
+        print("SUCCESS: Model meets all dissertation requirements!")
     else:
-        print("Keep practicing! The AI student needs more training data.")
+        print(" Model does not meet all dissertation requirements.")
+        if not r2_pass:
+            print(f"   - R² score {r2:.4f} is below threshold {R2_THRESHOLD}")
+        if not mae_pass:
+            print(f"   - MAE {mae:.4f} is above threshold {MAE_THRESHOLD}")
+    print(f"{'='*60}\n")
 
     return metrics
 
 def plot_prediction_comparison(y_true, y_pred, save_path=None):
     """
-    Create a scatter plot comparing true vs predicted values.
+    Generate scatter plot comparing predicted vs actual CVSS scores.
+
+    Creates a visualization with:
+    - Blue scatter points for each prediction
+    - Red dashed diagonal line showing perfect prediction
+    - Text box displaying MSE and R² statistics
 
     Args:
-        y_true (array): True values
-        y_pred (array): Predicted values
-        save_path (str, optional): Path to save the plot image
+        y_true (array): Ground truth CVSS scores
+        y_pred (array): Model predicted scores
+        save_path (str, optional): File path to save plot image (if provided)
     """
     plt.figure(figsize=(10, 6))
 
-    # Scatter plot of predictions vs actual
+    # Plot predicted vs actual as scatter points
     plt.scatter(y_true, y_pred, alpha=0.6, color='blue', edgecolors='black')
 
-    # Perfect prediction line
+    # Draw diagonal line representing perfect predictions
     min_val = min(np.min(y_true), np.min(y_pred))
     max_val = max(np.max(y_true), np.max(y_pred))
     plt.plot([min_val, max_val], [min_val, max_val], 'r--', linewidth=2, label='Perfect Prediction')
 
     plt.xlabel('Actual CVSS Score', fontsize=12)
     plt.ylabel('Predicted Risk Score', fontsize=12)
-    plt.title('AI Model: Predicted vs Actual Risk Scores', fontsize=14)
+    plt.title('Model Performance: Predicted vs Actual Risk Scores', fontsize=14)
     plt.grid(True, alpha=0.3)
     plt.legend()
 
-    # Add statistics text
+    # Add performance statistics as text overlay
     mse = mean_squared_error(y_true, y_pred)
     r2 = r2_score(y_true, y_pred)
     stats_text = f'MSE: {mse:.3f}\nR²: {r2:.3f}'
@@ -222,6 +241,7 @@ def plot_prediction_comparison(y_true, y_pred, save_path=None):
              bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8),
              verticalalignment='top')
 
+    # Save to file if path provided
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         print(f"Plot saved to {save_path}")
@@ -230,22 +250,21 @@ def plot_prediction_comparison(y_true, y_pred, save_path=None):
 
 def get_project_root():
     """
-    Get the root directory of the project.
+    Get the absolute path to the project root directory.
 
     Returns:
-        str: Absolute path to project root
+        str: Absolute path to project root (parent of ai_module directory)
     """
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    # Go up one level from ai_module to project root
-    project_root = os.path.dirname(current_dir)
+    project_root = os.path.dirname(current_dir)  # Move up one level from ai_module
     return project_root
 
 def ensure_directory_exists(directory_path):
     """
-    Ensure a directory exists, creating it if necessary.
+    Create directory if it doesn't exist.
 
     Args:
-        directory_path (str): Path to the directory
+        directory_path (str): Path to directory to create
     """
     if not os.path.exists(directory_path):
         os.makedirs(directory_path)
@@ -253,11 +272,14 @@ def ensure_directory_exists(directory_path):
 
 def save_evaluation_results(metrics, filepath):
     """
-    Save model evaluation results to a JSON file.
+    Save evaluation metrics to JSON file.
+
+    Creates parent directory if needed, then writes metrics dictionary
+    to JSON file with indentation for readability.
 
     Args:
-        metrics (dict): Evaluation metrics dictionary
-        filepath (str): Path to save the results
+        metrics (dict): Evaluation metrics to save
+        filepath (str): Destination path for JSON file
     """
     ensure_directory_exists(os.path.dirname(filepath))
 
@@ -270,13 +292,13 @@ def save_evaluation_results(metrics, filepath):
 
 def load_evaluation_results(filepath):
     """
-    Load model evaluation results from a JSON file.
+    Load evaluation metrics from JSON file.
 
     Args:
-        filepath (str): Path to the results file
+        filepath (str): Path to JSON file containing metrics
 
     Returns:
-        dict or None: Loaded metrics, or None if error
+        dict or None: Loaded metrics dictionary, or None if loading fails
     """
     try:
         with open(filepath, 'r') as f:
@@ -287,27 +309,30 @@ def load_evaluation_results(filepath):
 
 def print_model_summary(feature_engineer, model, metrics):
     """
-    Print a comprehensive summary of the trained model.
+    Display comprehensive summary of trained model.
+
+    Prints formatted summary including dataset size, feature count,
+    performance metrics, and feature engineering breakdown.
 
     Args:
-        feature_engineer: The feature engineering object
-        model: The trained ML model
-        metrics (dict): Evaluation metrics
+        feature_engineer: VulnerabilityFeatureEngineer instance
+        model: Trained CybersecurityRiskModel instance
+        metrics (dict): Evaluation metrics from evaluate_model_performance()
     """
     print("\n" + "="*60)
-    print("🤖 CYBERSECURITY AUDIT AI MODEL SUMMARY")
+    print(" CYBERSECURITY AUDIT AI MODEL SUMMARY")
     print("="*60)
 
-    print(f"\n📊 Dataset Information:")
+    print(f"\n Dataset Information:")
     print(f"   - Total vulnerabilities: {metrics['sample_count']}")
     print(f"   - Features used: {len(feature_engineer.feature_names)}")
 
-    print(f"\n🎯 Model Performance:")
+    print(f"\n Model Performance:")
     print(f"   - Mean Absolute Error: {metrics['mean_absolute_error']}")
     print(f"   - Predictions within 1 point: {metrics['accuracy_within_1_point']}%")
     print(f"   - R² Score: {metrics['r_squared']}")
 
-    print(f"\n🔧 Feature Engineering:")
+    print(f"\n Feature Engineering:")
     importance_info = feature_engineer.get_feature_importance_template()
     for group, info in importance_info.items():
         print(f"   - {group}: {info['count']} features")
