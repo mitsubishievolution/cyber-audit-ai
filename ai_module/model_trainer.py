@@ -9,8 +9,6 @@ Functionality:
 - Evaluates model performance using MAE, RMSE, and R² metrics
 - Saves trained model and feature engineer for inference
 - Generates performance visualization graphs
-
-Author: University Cybersecurity Audit AI Project
 """
 
 import numpy as np

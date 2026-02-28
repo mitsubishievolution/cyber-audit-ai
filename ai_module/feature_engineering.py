@@ -6,8 +6,6 @@ Transforms raw vulnerability data into numerical features for machine learning.
 This module handles the preprocessing pipeline that converts vulnerability records
 (text descriptions, types, CVSS scores) into feature matrices suitable for training
 regression models. Uses TF-IDF vectorization for text and one-hot encoding for categorical data.
-
-Author: University Cybersecurity Audit AI Project
 """
 
 import json

@@ -8,8 +8,6 @@ This module provides helper functions for:
 - Evaluating model performance using regression metrics (MAE, RMSE, R²)
 - Generating visualization plots for model predictions
 - Managing file system operations (directories, saving/loading results)
-
-Author: University Cybersecurity Audit AI Project
 """
 
 import json
